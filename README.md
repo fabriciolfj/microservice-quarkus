@@ -11,3 +11,5 @@
 ```
 docker run -it --rm -v $PWD:$PWD -w $PWD -v /var/run/docker.sock:/var/run/docker.sock maven:3 mvn test
 ```
+
+- Para proteger nossa aplicação, estou utilizando o keycloak.
