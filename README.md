@@ -13,3 +13,5 @@ docker run -it --rm -v $PWD:$PWD -w $PWD -v /var/run/docker.sock:/var/run/docker
 ```
 
 - Para proteger nossa aplicação, estou utilizando o keycloak.
+
+- Para uso de trace, codigo utilizado para monitoramento, usamos o jaeger.
