@@ -2,6 +2,8 @@
 - Adicionando dependências:
 ```
  mvn quarkus:add-extension -Dextensions="jdbc-postgres, orm-panache, resteasy-jsonb, openapi, hibernate-validator"
+ mvn quarkus:add-extension -Dextensions="opentracing"
+ mvn quarkus:add-extension -Dextensions="smallrye-opentracing"
 ```
 - Subindo a aplicação
 ```
