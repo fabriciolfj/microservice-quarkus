@@ -1,10 +1,30 @@
-package com.github.fabriciolfj.ifood.cadastro;
+package com.github.fabriciolfj.ifood.cadastro.api.controller;
 
 import com.github.fabriciolfj.ifood.cadastro.domain.model.Prato;
 import com.github.fabriciolfj.ifood.cadastro.domain.model.Restaurante;
+import com.github.fabriciolfj.ifood.cadastro.api.dto.PratoDTO;
+import com.github.fabriciolfj.ifood.cadastro.api.dto.RestauranteDTO;
+import com.github.fabriciolfj.ifood.cadastro.api.mapper.PratoMapper;
+import com.github.fabriciolfj.ifood.cadastro.api.mapper.RestauranteMapper;
+import com.github.fabriciolfj.ifood.cadastro.infra.ConstraintViolationResponse;
+import org.eclipse.microprofile.metrics.annotation.Counted;
+import org.eclipse.microprofile.metrics.annotation.Gauge;
+import org.eclipse.microprofile.metrics.annotation.SimplyTimed;
+import org.eclipse.microprofile.metrics.annotation.Timed;
+import org.eclipse.microprofile.openapi.annotations.enums.SecuritySchemeType;
+import org.eclipse.microprofile.openapi.annotations.media.Content;
+import org.eclipse.microprofile.openapi.annotations.media.Schema;
+import org.eclipse.microprofile.openapi.annotations.responses.APIResponse;
+import org.eclipse.microprofile.openapi.annotations.security.OAuthFlow;
+import org.eclipse.microprofile.openapi.annotations.security.OAuthFlows;
+import org.eclipse.microprofile.openapi.annotations.security.SecurityRequirement;
+import org.eclipse.microprofile.openapi.annotations.security.SecurityScheme;
 import org.eclipse.microprofile.openapi.annotations.tags.Tag;
 
+import javax.annotation.security.RolesAllowed;
+import javax.inject.Inject;
 import javax.transaction.Transactional;
+import javax.validation.Valid;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
@@ -18,36 +38,58 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 @Path("/restaurantes")
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
 @Tag(name = "restaurante")
+@RolesAllowed("proprietario")
+@SecurityScheme(securitySchemeName = "ifood-oauth",
+        type = SecuritySchemeType.OAUTH2,
+        flows = @OAuthFlows(password = @OAuthFlow(tokenUrl = "http://localhost:8180/auth/realms/ifood/protocol/openid-connect/token")))
+@SecurityRequirement(name = "ifood-oauth")
 public class RestauranteResource {
 
+    @Inject
+    private RestauranteMapper mapper;
+
+    @Inject
+    private PratoMapper pratoMapper;
+
     @GET
-    public List<Restaurante> getAll() {
-        return Restaurante.listAll();
+    @Counted(name = "Quantidade buscas Restaurante") //quantidade que esse método foi chamado
+    @SimplyTimed(name = "Tempo simples de busca") //tempo que demoro a média de execuçãoes
+    @Timed(name = "Tempo completo de busca")// disponibiliza varios agrupamentos de tempo
+    //@Gauge() pegar uma informação específica, como espaço em disco, temperatura do cpu
+    public List<RestauranteDTO> getAll() {
+        Stream<Restaurante> restaurantes= Restaurante.streamAll();
+        return restaurantes.map(r -> mapper.toDTO(r))
+                .collect(Collectors.toList());
     }
 
     @POST
     @Transactional
-    public Response adicionar(Restaurante dto) {
-        dto.persist();
+    @APIResponse(responseCode = "201", description = "Caso o restaurante seja cadastrado com sucesso")
+    @APIResponse(responseCode = "400", content = @Content(schema = @Schema(allOf = ConstraintViolationResponse.class)))
+    public Response adicionar(@Valid RestauranteDTO dto) {
+        var restaurante =  mapper.toDomain(dto);
+        restaurante.persist();
         return Response.status(Response.Status.CREATED).build();
     }
 
     @PUT
     @Path("{id}")
     @Transactional
-    public void atualizar(@PathParam("id") Long id, Restaurante dto) {
+    public void atualizar(@PathParam("id") Long id, RestauranteDTO dto) {
         Optional<Restaurante> restaurante = Restaurante.findByIdOptional(id);
 
         if(restaurante.isEmpty()) {
             new NotFoundException();
         }
         var entity = restaurante.get();
-        entity.nome = dto.nome;
+        mapper.toRestaurante(dto, entity);
         entity.persist();
     }
 
@@ -64,23 +106,21 @@ public class RestauranteResource {
     @GET
     @Path("{idRestaurante}/pratos")
     @Tag(name = "prato")
-    public List<Prato> buscarPratos(@PathParam("idRestaurante") Long idRestaurante) {
+    public List<PratoDTO> buscarPratos(@PathParam("idRestaurante") Long idRestaurante) {
         Optional<Restaurante> entity = getRestaurante(idRestaurante);
 
-        return Prato.list("restaurante", entity.get());
+        Stream<Prato> pratos = Prato.stream("restaurante", entity.get());
+        return pratos.map(r -> pratoMapper.toDto(r)).collect(Collectors.toList());
     }
 
     @POST
     @Path("{idRestaurante}/pratos")
     @Tag(name = "prato")
     @Transactional
-    public Response adicionar(@PathParam("idRestaurante") Long idRestaurante, Prato dto) {
+    public Response adicionar(@PathParam("idRestaurante") Long idRestaurante, PratoDTO dto) {
         Optional<Restaurante> entity = getRestaurante(idRestaurante);
 
-        Prato prato = new Prato();
-        prato.preco = dto.preco;
-        prato.nome = dto.nome;
-        prato.descricao = dto.descricao;
+        var prato = pratoMapper.toDomain(dto);
         prato.restaurante = entity.get();
         prato.persist();
 
@@ -91,7 +131,7 @@ public class RestauranteResource {
     @Path("{idRestaurante}/pratos/{id}")
     @Tag(name = "prato")
     @Transactional
-    public void atualizar(@PathParam("idRestaurante") Long idRestaurante, @PathParam("id") Long id, Prato prato) {
+    public void atualizar(@PathParam("idRestaurante") Long idRestaurante, @PathParam("id") Long id, PratoDTO dto) {
         Optional<Restaurante> restaurante = getRestaurante(idRestaurante);
         List<Prato> pratos = Prato.list("restaurante", restaurante.get());
 
@@ -102,7 +142,7 @@ public class RestauranteResource {
         pratos.stream()
                 .filter(entity -> entity.id.equals(id))
                 .map(p -> {
-                    p.preco = prato.preco;
+                    pratoMapper.toPrato(dto, p);
                     p.persist();
                     return true;
                 })
