@@ -5,6 +5,7 @@
  mvn quarkus:add-extension -Dextensions="opentracing"
  mvn quarkus:add-extension -Dextensions="smallrye-opentracing"
  mvn quarkus:add-extension -Dextensions="metrics"
+ mvn quarkus:add-extension -Dextensions="flyway"
 ```
 - Subindo a aplicação
 ```
