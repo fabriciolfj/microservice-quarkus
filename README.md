@@ -22,3 +22,9 @@ docker run -it --rm -v $PWD:$PWD -w $PWD -v /var/run/docker.sock:/var/run/docker
 ```
 docker build -f Dockerfile.prometheus -t prometheus-ifood .
 ```
+- Links:
+```
+http://localhost:9090/graph?g0.range_input=1h&g0.expr=up&g0.tab=1&g1.range_input=1h&g1.expr=&g1.tab=1 --promethes
+http://localhost:16686/search -- jaeger
+http://localhost:3000/login -- grafana
+```
