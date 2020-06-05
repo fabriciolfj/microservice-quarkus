@@ -6,6 +6,10 @@
  mvn quarkus:add-extension -Dextensions="smallrye-opentracing"
  mvn quarkus:add-extension -Dextensions="metrics"
  mvn quarkus:add-extension -Dextensions="flyway"
+ 
+ Para o servico marketplay:
+ mvn quarkus:add-extension -Dextensions="resteasy-mutiny,jdbc-postgres, flyway, pg-client"
+
 ```
 - Subindo a aplicação
 ```
