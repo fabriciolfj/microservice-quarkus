@@ -9,6 +9,8 @@
  
  Para o servico marketplay:
  mvn quarkus:add-extension -Dextensions="resteasy-mutiny,jdbc-postgres, flyway, pg-client"
+ mvn quarkus:add-extension -Dextensions="resteasy-jsonb, openapi"
+
 
 ```
 - Subindo a aplicação
