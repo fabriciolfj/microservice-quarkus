@@ -6,6 +6,7 @@ import io.smallrye.mutiny.Uni;
 import io.vertx.mutiny.pgclient.PgPool;
 import io.vertx.mutiny.sqlclient.Row;
 import io.vertx.mutiny.sqlclient.RowSet;
+import io.vertx.mutiny.sqlclient.Tuple;
 
 import java.math.BigDecimal;
 import java.util.stream.StreamSupport;
@@ -36,5 +37,11 @@ public class Prato {
     private static Multi<PratoDTO> getPratoDTOMulti(Uni<RowSet<Row>> preparedQuery) {
         return preparedQuery.onItem().produceMulti(rowSet -> Multi.createFrom().items(() ->
                 StreamSupport.stream(rowSet.spliterator(), false))).onItem().apply(PratoDTO::from);
+    }
+
+    public static Uni<PratoDTO> findById(PgPool client, Long id) {
+        return client.preparedQuery("SELECT * FROM prato WHERE id = $1", Tuple.of(id))
+                .map(RowSet::iterator)
+                .map(iterator -> iterator.hasNext() ? PratoDTO.from(iterator.next()) : null);
     }
 }

@@ -29,4 +29,6 @@ public class PratoResource {
     public Multi<PratoDTO> buscarPratos() {
         return Prato.findAll(pgPool);
     }
+
+
 }
