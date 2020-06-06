@@ -12,6 +12,11 @@
  mvn quarkus:add-extension -Dextensions="resteasy-mutiny,jdbc-postgres, flyway, pg-client"
  mvn quarkus:add-extension -Dextensions="resteasy-jsonb, openapi"
  mvn quarkus:add-extension -Dextensions="amqp"
+ mvn quarkus:add-extension -Dextensions="kafka"
+ 
+ Para microservice pedidos:
+ mvn quarkus:add-extension -Dextensions="openapi, resteasy-jsonb, mongodb-panache"
+
 ```
 - Subindo a aplicação
 ```
