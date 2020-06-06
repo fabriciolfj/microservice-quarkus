@@ -16,6 +16,7 @@
  
  Para microservice pedidos:
  mvn quarkus:add-extension -Dextensions="openapi, resteasy-jsonb, mongodb-panache"
+ mvn quarkus:add-extension -Dextensions="kafka"
 
 ```
 - Subindo a aplicação
